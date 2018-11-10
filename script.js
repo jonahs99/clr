@@ -6,7 +6,7 @@ const mix_mode = 'darken'
 const n_pallete = 6
 const n_target = 3
 
-const min_distance = 40
+const min_distance = 80
 
 const target_rad = 100
 
@@ -14,7 +14,9 @@ const eps = 0.001
 
 let pallete = []
 let targetColors = []
+
 let targetColor = null
+let paintColor = null
 
 let anim_rad = target_rad
 
@@ -33,7 +35,7 @@ function gen() {
 
 		let keep = true
 		for (let other of pallete) {
-			if (chroma.distance(blob.clr, other.clr) < min_distance) {
+			if (chroma.distance(blob.clr, other.clr, 'rgb') < min_distance) {
 				keep = false
 				break
 			}
@@ -45,6 +47,12 @@ function gen() {
 		}
     }
 
+	paintColor = chroma('#fff')
+
+	gen_target()
+}
+
+function gen_target() {	
     targetColors = []
     for (let i = 0; i < n_pallete; i++) {
         targetColors.push(i)
@@ -53,15 +61,20 @@ function gen() {
         targetColors.splice(Math.floor(Math.random() * targetColors.length), 1)
     }
 
-
     targetColor = blend(targetColors.map(i => pallete[i].clr))
 
-    anim_rad = target_rad
+	// Reset the pallete
+	for (let blob of pallete) {
+		blob.picked = false
+	}
+	calc()
 
-    /*targetColor = chroma('#FFF')
-    for (let i = 0; i < targetColors.length; i++) {
-        targetColor = chroma.blend(targetColor, pallete[targetColors[i]].clr, mix_mode)
-    }*/
+	anim_rad = target_rad
+}
+
+function calc() {
+    let clrs = pallete.filter(blob => blob.picked).map(blob => blob.clr)
+    paintColor = clrs.length? blend(pallete.filter(blob => blob.picked).map(blob => blob.clr)) : chroma('#fff')
 }
 
 function draw(ctx) {
@@ -81,16 +94,6 @@ function draw(ctx) {
     ctx.fill()
 
     // Paint Color
-
-    /*let paintColor = chroma('#fff')
-    for (let blob of pallete) {
-        if (blob.picked) {
-            paintColor = chroma.blend(paintColor, blob.clr, mix_mode)
-        }
-    }*/
-    let clrs = pallete.filter(blob => blob.picked).map(blob => blob.clr)
-
-    let paintColor = clrs.length? blend(pallete.filter(blob => blob.picked).map(blob => blob.clr)) : chroma('#fff')
 
     ctx.fillStyle = paintColor.hex()
 
@@ -120,13 +123,13 @@ function draw(ctx) {
     const dist = chroma.distance(targetColor, paintColor)
     if (dist < eps) {
         // WIN!
-        anim_rad += 5
+        anim_rad += 30
     } else {
         anim_rad = target_rad
     }
 
-    if (anim_rad > canvas.width) {
-        gen()
+    if (anim_rad > canvas.width * 0.5 * 1.5) {
+        gen_target()
     }
 }
 
@@ -141,12 +144,13 @@ document.addEventListener('mousedown', ev => {
         }
     }
 
-    draw(context)
+	calc()
 })
 
 document.addEventListener('keyup', ev => {
 	if (ev.keyCode == 82) {
-		gen()	
+		gen_target()
+		calc()
 	}
 })
 
@@ -160,5 +164,6 @@ window.onload = () => {
     canvas.height = window.innerHeight
 
     gen()
+	calc()
     requestAnimationFrame(draw.bind(null, context))
 }
