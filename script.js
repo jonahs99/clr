@@ -1,12 +1,10 @@
 const canvas = document.getElementById('canvas')
 const context = canvas.getContext('2d')
 
-const mix_mode = 'darken'
+const n_pallete = 5
+const n_target = 2
 
-const n_pallete = 6
-const n_target = 3
-
-const min_distance = 80
+const min_distance = 100
 
 const target_rad = 100
 
